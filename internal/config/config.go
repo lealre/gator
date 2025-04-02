@@ -15,12 +15,10 @@ type Config struct {
 }
 
 func Read() (Config, error) {
-	homeDir, err := os.UserHomeDir()
+	configFilePath, err := getConfigFilePath()
 	if err != nil {
-		return Config{}, fmt.Errorf("failed to get home directory: %w", err)
+		return Config{}, err
 	}
-
-	configFilePath := filepath.Join(homeDir, configFileName)
 
 	data, err := os.ReadFile(configFilePath)
 	if err != nil {
@@ -34,4 +32,43 @@ func Read() (Config, error) {
 	}
 
 	return config, nil
+}
+
+func (c Config) SetUser(userName string) error {
+	c.CurrentUser = userName
+	err := write(c)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func getConfigFilePath() (string, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Println("Failed to get home directory:", err)
+		return "", err
+	}
+
+	return filepath.Join(homeDir, configFileName), nil
+}
+
+func write(cfg Config) error {
+	configFilePath, err := getConfigFilePath()
+	if err != nil {
+		return fmt.Errorf("failed to get config file path: %w", err)
+	}
+
+	data, err := json.Marshal(cfg)
+	if err != nil {
+		return fmt.Errorf("error marshalling JSON: %w", err)
+	}
+
+	err = os.WriteFile(configFilePath, data, 0644)
+	if err != nil {
+		return fmt.Errorf("error writing file: %w", err)
+	}
+
+	return nil
 }
