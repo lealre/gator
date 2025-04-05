@@ -1,10 +1,14 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"os"
 
 	"github.com/lealre/gator/internal/config"
+	"github.com/lealre/gator/internal/database"
+
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -12,7 +16,15 @@ func main() {
 	if err != nil {
 		fmt.Print(err)
 	}
-	s := &state{config: &cfg}
+
+	db, err := sql.Open("postgres", cfg.DbUrl)
+	if err != nil {
+		fmt.Print(err)
+	}
+
+	dbQueries := database.New(db)
+	s := &state{cfg: &cfg, db: dbQueries}
+
 	cmd := &commands{commands: make(map[string]func(*state, command) error)}
 	cmd.register("login", handlerLogin)
 
@@ -39,7 +51,8 @@ func main() {
 }
 
 type state struct {
-	config *config.Config
+	db  *database.Queries
+	cfg *config.Config
 }
 
 type command struct {
@@ -53,7 +66,7 @@ func handlerLogin(s *state, cmd command) error {
 	}
 
 	userName := cmd.args[0]
-	err := s.config.SetUser(userName)
+	err := s.cfg.SetUser(userName)
 	if err != nil {
 		return err
 	}
