@@ -31,6 +31,7 @@ func main() {
 	cmd := &commands{commands: make(map[string]func(*state, command) error)}
 	cmd.register("login", handlerLogin)
 	cmd.register("register", handlerRegister)
+	cmd.register("reset", handlerReset)
 
 	if len(os.Args) < 2 {
 		fmt.Println("Please provide a command")
@@ -123,6 +124,21 @@ func handlerRegister(s *state, cmd command) error {
 
 	fmt.Printf("User setted as %s\n", userName)
 	fmt.Printf("User created as %s\n", userName)
+	return nil
+}
+
+func handlerReset(s *state, cmd command) error {
+	if len(cmd.args) > 0 {
+		return fmt.Errorf("usage: reset")
+	}
+	ctx := context.Background()
+
+	err := s.db.ResetTable(ctx)
+	if err != nil {
+		return fmt.Errorf("error reseting database: %w", err)
+	}
+
+	fmt.Println("Users table reset")
 	return nil
 }
 
