@@ -1,10 +1,17 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
 	"os"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/lealre/gator/internal/config"
+	"github.com/lealre/gator/internal/database"
+
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -12,19 +19,24 @@ func main() {
 	if err != nil {
 		fmt.Print(err)
 	}
-	s := &state{config: &cfg}
+
+	db, err := sql.Open("postgres", cfg.DbUrl)
+	if err != nil {
+		fmt.Print(err)
+	}
+
+	dbQueries := database.New(db)
+	s := &state{cfg: &cfg, db: dbQueries}
+
 	cmd := &commands{commands: make(map[string]func(*state, command) error)}
 	cmd.register("login", handlerLogin)
+	cmd.register("register", handlerRegister)
 
 	if len(os.Args) < 2 {
 		fmt.Println("Please provide a command")
 		os.Exit(1)
 	}
 
-	if len(os.Args) < 3 {
-		fmt.Println("Usage: login <name>")
-		os.Exit(1)
-	}
 	userCmd := os.Args[1]
 	args := os.Args[2:]
 
@@ -39,7 +51,8 @@ func main() {
 }
 
 type state struct {
-	config *config.Config
+	db  *database.Queries
+	cfg *config.Config
 }
 
 type command struct {
@@ -49,16 +62,50 @@ type command struct {
 
 func handlerLogin(s *state, cmd command) error {
 	if len(cmd.args) == 0 {
-		return fmt.Errorf("missing username")
+		return fmt.Errorf("usage: login <name>")
 	}
 
 	userName := cmd.args[0]
-	err := s.config.SetUser(userName)
+	err := s.cfg.SetUser(userName)
 	if err != nil {
 		return err
 	}
 
 	fmt.Printf("User setted as %s\n", userName)
+	return nil
+}
+
+func handlerRegister(s *state, cmd command) error {
+	if len(cmd.args) == 0 {
+		return fmt.Errorf("usage: register <name>")
+	}
+
+	userName := cmd.args[0]
+
+	ctx := context.Background()
+
+	// Check if user already exists
+	_, err := s.db.GetUserByName(ctx, userName)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			return fmt.Errorf("error getting user: %w", err)
+		}
+	}
+
+	// Create new user
+	newUser := database.CreateUserParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Name:      cmd.args[0],
+	}
+
+	_, err = s.db.CreateUser(ctx, newUser)
+	if err != nil {
+		return fmt.Errorf("error creating user: %w", err)
+	}
+
+	fmt.Printf("User created as %s\n", userName)
 	return nil
 }
 
@@ -72,7 +119,7 @@ func (c *commands) register(name string, f func(*state, command) error) {
 
 func (c *commands) run(s *state, cmd command) error {
 	if f, ok := c.commands[cmd.name]; ok {
-		f(s, command{name: cmd.name, args: cmd.args})
+		return f(s, command{name: cmd.name, args: cmd.args})
 	} else {
 		fmt.Printf("Command %s not found\n", cmd.name)
 	}
