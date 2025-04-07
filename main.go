@@ -33,6 +33,8 @@ func main() {
 	cmd.Register("reset", handlers.Reset)
 	cmd.Register("users", handlers.ListUsers)
 	cmd.Register("agg", handlers.Aggregate)
+	cmd.Register("addfeed", handlers.AddFeed)
+	cmd.Register("feeds", handlers.ListFeed)
 
 	if len(os.Args) < 2 {
 		fmt.Println("Please provide a command")
