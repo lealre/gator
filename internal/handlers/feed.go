@@ -41,6 +41,17 @@ func AddFeed(s *commands.State, cmd commands.Command) error {
 		return fmt.Errorf("error adding new feed: %w", err)
 	}
 
+	// automatically follows the feed
+	createFeedParams := database.CreateFeedFollowParams{
+		UserID: user.ID,
+		FeedID: feed.ID,
+	}
+
+	_, err = s.Db.CreateFeedFollow(ctx, createFeedParams)
+	if err != nil {
+		return fmt.Errorf("error creating the feed follow: %w", err)
+	}
+
 	fmt.Printf("url: %s\n", feed.Url)
 	fmt.Printf("name: %s\n", feed.Name)
 

@@ -21,3 +21,9 @@ SELECT
     feed.updated_at
 FROM feed
 JOIN users ON feed.user_id = users.id;
+
+-- name: GetFeed :one
+SELECT *
+FROM feed
+WHERE url = $1;
+

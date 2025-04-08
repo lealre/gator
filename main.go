@@ -35,6 +35,8 @@ func main() {
 	cmd.Register("agg", handlers.Aggregate)
 	cmd.Register("addfeed", handlers.AddFeed)
 	cmd.Register("feeds", handlers.ListFeed)
+	cmd.Register("follow", handlers.Follow)
+	cmd.Register("following", handlers.Following)
 
 	if len(os.Args) < 2 {
 		fmt.Println("Please provide a command")
