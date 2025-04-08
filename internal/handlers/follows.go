@@ -79,3 +79,45 @@ func Following(s *commands.State, cmd commands.Command) error {
 
 	return nil
 }
+
+func Unfollow(s *commands.State, cmd commands.Command) error {
+	if len(cmd.Args) > 1 {
+		return fmt.Errorf("usage: unfollow <url>")
+	}
+
+	feedUrl := cmd.Args[0]
+
+	ctx := context.Background()
+
+	// check for url
+	_, err := s.Db.GetFeed(ctx, feedUrl)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return fmt.Errorf("feed '%s' not found", feedUrl)
+		}
+		return err
+	}
+
+	// get user id
+	currentUser := s.Cfg.CurrentUser
+	user, err := s.Db.GetUserByName(ctx, currentUser)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return fmt.Errorf("user '%s' not found", currentUser)
+		}
+		return err
+	}
+
+	unfollowParams := database.UnfollowFeedParams{
+		UserID: user.ID,
+		Url:    feedUrl,
+	}
+
+	err = s.Db.UnfollowFeed(ctx, unfollowParams)
+	if err != nil {
+		return fmt.Errorf("error unfollowing feed '%s': %w", feedUrl, err)
+	}
+
+	fmt.Printf("user %s unfollowed %s", user.Name, feedUrl)
+	return nil
+}
