@@ -8,12 +8,14 @@ import (
 	"html"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/lealre/gator/internal/commands"
 	"github.com/lealre/gator/internal/database"
 	"github.com/lib/pq"
+	"github.com/microcosm-cc/bluemonday"
 )
 
 type RSSFeed struct {
@@ -129,11 +131,13 @@ func scrapeFeeds(s *commands.State) error {
 			return fmt.Errorf("error parsing the post date %s: %w", item.PubDate, err)
 		}
 
+		cleanDescription := cleanDescription(item.Description)
+
 		newPost := database.CreatePostParams{
 			ID:          uuid.New(),
 			Title:       sql.NullString{String: item.Title, Valid: true},
 			Url:         item.Link,
-			Description: sql.NullString{String: item.Description, Valid: true},
+			Description: sql.NullString{String: cleanDescription, Valid: true},
 			FeedID:      feedId,
 			PublishedAt: publishedDate,
 			CreatedAt:   time.Now(),
@@ -159,4 +163,22 @@ func scrapeFeeds(s *commands.State) error {
 func parseRSSDate(dateStr string) (time.Time, error) {
 	layout := "Mon, 02 Jan 2006 15:04:05 -0700"
 	return time.Parse(layout, dateStr)
+}
+
+func cleanDescription(raw string) string {
+	// 1. Decode HTML entities
+	decoded := html.UnescapeString(raw)
+
+	// 2. Replace known block-level tags with newlines
+	decoded = strings.ReplaceAll(decoded, "</p>", "\n")
+	decoded = strings.ReplaceAll(decoded, "<br>", "\n")
+	decoded = strings.ReplaceAll(decoded, "<br/>", "\n")
+	decoded = strings.ReplaceAll(decoded, "<br />", "\n")
+
+	// 3. Remove all remaining HTML
+	p := bluemonday.StrictPolicy()
+	clean := p.Sanitize(decoded)
+
+	// 4. Clean up excessive whitespace
+	return strings.TrimSpace(clean)
 }
