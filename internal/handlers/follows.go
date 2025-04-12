@@ -11,7 +11,7 @@ import (
 )
 
 func Follow(s *commands.State, cmd commands.Command) error {
-	if len(cmd.Args) > 1 {
+	if len(cmd.Args) != 1 {
 		return fmt.Errorf("usage: follow <url>")
 	}
 
@@ -81,7 +81,7 @@ func Following(s *commands.State, cmd commands.Command) error {
 }
 
 func Unfollow(s *commands.State, cmd commands.Command) error {
-	if len(cmd.Args) > 1 {
+	if len(cmd.Args) != 1 {
 		return fmt.Errorf("usage: unfollow <url>")
 	}
 

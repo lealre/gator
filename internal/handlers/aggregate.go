@@ -166,19 +166,15 @@ func parseRSSDate(dateStr string) (time.Time, error) {
 }
 
 func cleanDescription(raw string) string {
-	// 1. Decode HTML entities
 	decoded := html.UnescapeString(raw)
 
-	// 2. Replace known block-level tags with newlines
 	decoded = strings.ReplaceAll(decoded, "</p>", "\n")
 	decoded = strings.ReplaceAll(decoded, "<br>", "\n")
 	decoded = strings.ReplaceAll(decoded, "<br/>", "\n")
 	decoded = strings.ReplaceAll(decoded, "<br />", "\n")
 
-	// 3. Remove all remaining HTML
 	p := bluemonday.StrictPolicy()
 	clean := p.Sanitize(decoded)
 
-	// 4. Clean up excessive whitespace
 	return strings.TrimSpace(clean)
 }
