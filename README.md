@@ -43,3 +43,17 @@ gator register 'your_username'
 
 > [!NOTE]
 > To run the commands without installing, use `go run . <command>`.
+
+## Commands
+
+- `login <name>`: Set the current user in `~/.gatorconfig.json`.
+- `register <name>`: Create a new user and set it as the current user in `~/.gatorconfig.json`.
+- `users`: List all users.
+- `reset`: Delete all records from the database.
+- `addfeed <name> <url>`: Add a new RSS feed.
+- `feeds`: List all feeds and the users who created them.
+- `follow <url>`: Set the current user to follow a feed.
+- `unfollow <url>`: Set the current user to unfollow a feed.
+- `following`: List all feeds being followed by the current user.
+- `agg <interval>`: Aggregate the feeds and store the posts in the database (e.g., `gator agg 10s`).
+- `browse <limit>`: List all posts, up to the specified limit (default `limit` is 2).
