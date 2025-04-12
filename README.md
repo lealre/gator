@@ -6,7 +6,6 @@ This project is CLI built with GO to:
 - Store the collected posts in a PostgreSQL database
 - Follow and unfollow RSS feeds that other users have added
 - View summaries of the aggregated posts in the terminal, with a link to the full post
-- RSS feeds are a way for websites to publish updates to their content. You can use this project to keep up with your favorite blogs, news sites, podcasts, and more!
 
 It was developed using [goose](https://github.com/pressly/goose) for database migrations, `psql` as the terminal client, and [sqlc](https://sqlc.dev/) to generate type-safe ORM functions.
 
